@@ -4,6 +4,6 @@ A discord bot that automates the process of conducting a competitive programming
 Python, discord.py, MongoDB
 ## Features:
 •	Participant Registration </br>
-•	Auto Bracket Generation
-•	Auto Match Updates
-•	Other management features
+•	Auto Bracket Generation </br>
+•	Auto Match Updates </br>
+•	Other management features </br>
