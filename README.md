@@ -3,7 +3,7 @@ A discord bot that automates the process of conducting a competitive programming
 ## Techstacks used
 Python, discord.py, MongoDB
 ## Features:
-•	Participant Registration\n
+•	Participant Registration </br>
 •	Auto Bracket Generation
 •	Auto Match Updates
 •	Other management features
