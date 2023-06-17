@@ -140,12 +140,14 @@ async def managerHelp(ctx):
 # sync functions
 
 def sing_status(task,user):
+    # tells if user has solved a given task
     link1 = f"{task[:-2]}/submissions?f.Task={task}&f.LanguageName=&f.Status=&f.User={user}"
     msg1 = ac_problemset.search(link1)
     ans1 = ac_problemset.status(msg1)
     return ans1
 
 def status(task,user1,user2):
+    # returns true if any of the user has solved the problem
     link1 = f"{task[:-2]}/submissions?f.Task={task}&f.LanguageName=&f.Status=&f.User={user1}"
     msg1 = ac_problemset.search(link1)
     ans1 = ac_problemset.status(msg1)
@@ -158,6 +160,8 @@ def status(task,user1,user2):
         return True
 
 def ac_probs(words,user1,user2):
+    # finds a problem not solved by either of the users 
+    # words=[i,x] where i is type of contest and x is a,b,c,d,or e
     link = 'Error, Please try again!'
     if words[0].lower() == 'beginner':
         if words[1] in 'abcd':
@@ -234,8 +238,6 @@ def ac_validate_acc(handle,string):
         aff = main.text[index+11:]
         s = str(aff)[:-1]
 
-        # s = string
-        # print(s,aff)
         if s == string:
             return True
         if time.time()-startTime > 60:
@@ -263,8 +265,6 @@ async def matchLive(ctx, str1, str2, dic, url, match_time):
     # await text_channel.send(embed=embed)
     # return
 
-
-    print("hello")
     # match_time = 0
     while(True):
         flag = False
@@ -326,10 +326,10 @@ async def matchLive(ctx, str1, str2, dic, url, match_time):
                             proburl = "https://codeforces.com/contest/" + str(xx['contestId']) + "/problem/" + str(xx['index'])
                             if(xx['status'] == 0):
                                 value += f"[{xx['name']}]({proburl})" + "\n" 
-                                score += str(idx*100) + "\n";
+                                score += str(idx*100) + "\n"
                             else:
                                 value += "this problem has been solved" + "\n" 
-                                score += str(idx*100) + "\n";
+                                score += str(idx*100) + "\n"
                             idx += 1
                         embed.add_field(name='Score', value = score, inline = True)
                         embed.add_field(name="Problem", value = value, inline=True)
@@ -380,7 +380,6 @@ async def matchLive(ctx, str1, str2, dic, url, match_time):
         else:
             index = 1
             for x in problem_list:
-                # print(x[0][-8:])
                 if sing_status(x[0][-8:],player1["ac_handle"]) == 'AC' and x[1] == 0:
                     x[1]=1
                     score1+=100*index
@@ -460,7 +459,6 @@ async def matchLive(ctx, str1, str2, dic, url, match_time):
         current_time=time.ctime()[11:19]
         hours=int(current_time[0:2])
         minutes=int(current_time[3:5])
-        seconds=int(current_time[6:8])
         time_elapsed=(hours-hours_start)*60+(minutes-minutes_start)
 
         if(time_elapsed > match_time-1):
@@ -689,12 +687,13 @@ async def matchUpdates(ctx):
     matches = current_matches.find_one({"server": ctx.guild.id})["matches"][tourneyName]
 
     for match in matches:
+        # to give details of matches in the required channel only 
         if(match["channel_id"] == text_channel.id):
             current_time=time.ctime()[11:19]
             hours=int(current_time[0:2])
             minutes=int(current_time[3:5])
             time_elapsed=(hours-match["Start_Time"][0])*60+(minutes-match["Start_Time"][1])
-            score1,score2=match["Scores"][0],match["Scores"][1]
+            score1,score2=match["Scores"][0], match["Scores"][1]
             id1,id2=match['player1']['id'],match['player2']['id']
             plt = match["platform"]
             embed=discord.Embed(
@@ -710,10 +709,10 @@ async def matchUpdates(ctx):
                     proburl = "https://codeforces.com/contest/" + str(x['contestId']) + "/problem/" + str(x['index'])
                     if(x['status'] == 0):
                         value += f"[{x['name']}]({proburl})" + "\n" 
-                        score += str(index*100) + "\n";
+                        score += str(index*100) + "\n"
                     else:
                         value += "this problem has been solved" + "\n" 
-                        score += str(index*100) + "\n";
+                        score += str(index*100) + "\n"
                     index=index+1
             else:
                 url = 'https://atcoder.jp/contests/'
@@ -841,7 +840,7 @@ async def startRegister(ctx, text_channel: discord.TextChannel, tourneyName = "-
             flag = True
 
     if(flag):
-        embed = discord.Embed(
+        embed = discord.Embed (
             title="Tournament name should be unique !",
             description="there exists a tournament with the same name so please try again with a new name",
             color=discord.Color.red()
@@ -892,7 +891,7 @@ async def startRegister(ctx, text_channel: discord.TextChannel, tourneyName = "-
 
 
 
-#Officially starts the tournament with matchups
+# Officially starts the tournament with matchups
 @client.command()
 @commands.has_role('Tourney-manager')
 async def startTourney(ctx, tourneyName= "--"):
@@ -1010,12 +1009,12 @@ async def matchChannel(ctx, text_channel: discord.TextChannel, tourneyName= "--"
         embed = discord.Embed(
             title="Invalid command! :x:",
             description="please specify tournament name",
-            color=discord.Color.red()
+            color=discord.Color.red()tournaments
         )
         await home_channel.send(embed=embed)
         return
 
-    tournaments = thisServer['tournaments']
+    tournaments = thisServer['']
     flag = False
     for i in tournaments:
         if(text_channel.id in tournaments[i]['match_channels'] or text_channel.id == tournaments[i]['text_channel']):
@@ -1253,29 +1252,37 @@ async def show(ctx):
 
 
 
-
 #Player match maker, matches the players based on different criteria
 def match_builder(ctx,tourneyName):
+
+    # Retrieve the participant list for the specified tournament
     part_ = participantsList.find_one({"server": ctx.guild.id})['contestants'][tourneyName]
+    # Sort participants based on their maximum rating in descending order
     participants = sorted(part_, key=lambda d: (-1)*d['maxRating'])
     player_count = len(participants)
 
     var = int(math.log2(player_count))
     temp = player_count - 2**var
+    # if number of players is not a power of 2, players with higher rating don't have match in 1st round
     lista = []
-    for j in range(2**var - temp):
+    x = 2**var-temp    # number of players to complete power of 2 
+    for j in range(x):
         lista.append([participants[j]])
     for j in range(2**var - temp + 1, 2**var + 1):
         if(j%2 == 0):
             lista.append([[participants[player_count-j+2**var - temp],participants[j-1]]])
         else:
             lista.append([[participants[j-1],participants[player_count-j+2**var - temp]]])
+
+    # Create the tournament match structure by merging pairs until there's only one element left
     while(len(lista) != 1):
         templist = []
         for j in range(int(len(lista)/2)):
             templist.append(lista[j] + lista[-j - 1][::-1])
         lista = templist
     lista = lista[0]
+
+    # Print the match pairings
     for i in lista:
         if(len(i) == 2):
             print(i[0]['cf_handle'],i[1]['cf_handle'])
@@ -1285,9 +1292,11 @@ def match_builder(ctx,tourneyName):
 
     matches_ = []
     if(temp > 0):
-        
+        # Handle matches involving the remaining participants
         playersone = []
         matchesone = []
+
+        # Create match pairs with the remaining participants
         for i in range(len(lista)):
             if(len(lista[i]) == 2):
                 playersone.append(lista[i][0])
@@ -1305,6 +1314,7 @@ def match_builder(ctx,tourneyName):
 
         playersone = []
         matchesone = []
+        # Create placeholders for matches involving remaining participants
         for i in range(len(lista)):
             if(len(lista[i]) == 2):
                 playersone.append("TBD")
@@ -1322,6 +1332,7 @@ def match_builder(ctx,tourneyName):
         
         matches_.append({"players": playersone, "matches": matchesone})
 
+        # Create placeholders and match details for subsequent levels
         for i in range(1,var):
             c = 2**(var - i)
             playersone = []
@@ -1361,7 +1372,7 @@ def match_builder(ctx,tourneyName):
         matches_.append({"players": playersone, "matches": matchesone})
 
         for i in range(1,var):
-            c = 2**(var - i)
+            c = 2**(var - i)   # number of players left in a round
             playersone = []
             matchesone = []
             for j in range(c):
@@ -1490,18 +1501,12 @@ async def startMatch(ctx, player_1, player_2, rting: str):
 
     if(flag):
         mat = current_matches.find_one({"server":ctx.guild.id})["matches"]
-        print(newxd)
-        # if(len(newxd) == 0):
-        #     mat[tourneyName] = []
-        # else:
-        #     mat[tourneyName] = newxd
         del mat[tourneyName]
         mat[tourneyName] = newxd
         match_list = newxd
         # mat.update({tourneyName: newxd})
             
         current_matches.update_one({"server":ctx.guild.id},{"$set":{"matches":mat}})
-        print(10)
 
     if not ac_check and not(rting.isdigit()):
         embed=discord.Embed(
@@ -1545,7 +1550,6 @@ async def startMatch(ctx, player_1, player_2, rting: str):
         tags=["implementation","dp","graphs","constructive algorithms","greedy","math","binary search","number theory","sortings"]
         random.shuffle(tags)
         url = f"https://codeforces.com/api/problemset.problems?{tags[0]}"
-        # url = f"https://codeforces.com/api/problemset.problems?implementation"
 
         response_API = requests.get(url)
         data = response_API.text
@@ -1559,7 +1563,6 @@ async def startMatch(ctx, player_1, player_2, rting: str):
             return
 
         problems = parse_json['result']['problems']
-
         random.shuffle(problems)
         problem_list = []
         scores = [0,0]
@@ -1655,6 +1658,7 @@ async def startMatch(ctx, player_1, player_2, rting: str):
     task1 = asyncio.create_task(matchLive(ctx,str1,str2,dic,url,match_time))
     await task1  
     
+
 
 #Display the list of participants 
 @client.command()
@@ -2090,17 +2094,20 @@ async def roundStatus(ctx,round = -1):
                     match_=match
                     break
             if(flag):
+                 #match ongoing
                  current_time=time.ctime()[11:19]
                  hours=int(current_time[0:2])
                  minutes=int(current_time[3:5])
                  time_elapsed=(hours-match_["Start_Time"][0])*60+(minutes-match_["Start_Time"][1])
                  match_status += f"{match['Match_duration'] - time_elapsed} mins left" + "\n"
             else:
+                # match not started
                 match_status += "pending" + "\n"
 
             
 
         elif(match["status"] == True):
+            # match finished
             match_status += f"<@{match['winner']['id']}>" + "\n"
 
         sr += str(count) + "\n"
@@ -2227,7 +2234,7 @@ async def registerMe(ctx, cf_handle="--"):
             await text_channel.send(embed=embed)
             return
 
-    maxR = 0;
+    maxR = 0
     uri = 'https://codeforces.com/api/user.info?handles=' + cf_handle
     response_API = requests.get(uri)
     data = response_API.text
@@ -2401,6 +2408,7 @@ async def showTourneys(ctx):
     embed.add_field(name="Name",value=tourneys,inline=True)
     await ctx.send(embed=embed)
     return
+
 
 @client.command()
 async def get_user(ctx,handle = '--'):
